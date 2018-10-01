@@ -4175,7 +4175,7 @@ unsigned char * SZ_compress_float_2D_MDQ_nonblocked_with_blocked_regression(floa
 
 	// calculate block dims
 	size_t num_x, num_y;
-	size_t block_size = 8;
+	size_t block_size = 16;
 
 	SZ_COMPUTE_2D_NUMBER_OF_BLOCKS(r1, num_x, block_size);
 	SZ_COMPUTE_2D_NUMBER_OF_BLOCKS(r2, num_y, block_size);
@@ -4247,7 +4247,7 @@ unsigned char * SZ_compress_float_2D_MDQ_nonblocked_with_blocked_regression(floa
 
 	//Compress coefficient arrays
 	double precision_a, precision_b, precision_c;
-	float rel_param_err = 0;//.15/3;
+	float rel_param_err = 0.15/3;
 	precision_a = rel_param_err * realPrecision / late_blockcount_x;
 	precision_b = rel_param_err * realPrecision / late_blockcount_y;
 	precision_c = rel_param_err * realPrecision;
@@ -4623,12 +4623,9 @@ unsigned char * SZ_compress_float_2D_MDQ_nonblocked_with_blocked_regression(floa
 		}// end i
 	}// end use mean
 	else{
-		int debug_count = 0;
 		type = result_type;
 		int intvCapacity_sz = intvCapacity - 2;
 		for(size_t i=0; i<num_x; i++){
-			if(i==10)
-				printf("%d\n", i);
 			current_blockcount_x = (i < split_index_x) ? early_blockcount_x : late_blockcount_x;
 			offset_x = (i < split_index_x) ? i * early_blockcount_x : i * late_blockcount_x + split_index_x;
 			data_pos = oriData + offset_x * dim0_offset;
@@ -4651,7 +4648,6 @@ unsigned char * SZ_compress_float_2D_MDQ_nonblocked_with_blocked_regression(floa
 					// [1, 1] [3, 3] [5, 5] [7, 7] [9, 9]
 					// [1, 9] [3, 7]		[7, 3] [9, 1]
 					int count = 0;
-					/*
 					for(int i=1; i<current_blockcount_x; i+=2){
 						cur_data_pos = data_pos + i * dim0_offset + i;
 						curData = *cur_data_pos;
@@ -4669,23 +4665,10 @@ unsigned char * SZ_compress_float_2D_MDQ_nonblocked_with_blocked_regression(floa
 
 						count += 2;
 					}
-					* */
-					for(int ii=1; ii<current_blockcount_x; ii++){
-						for(int jj=1; jj<current_blockcount_y; jj++){
-							cur_data_pos = data_pos + ii * dim0_offset + jj;
-							curData = *cur_data_pos;
-							pred_sz = cur_data_pos[-1] + cur_data_pos[-dim0_offset] - cur_data_pos[-dim0_offset - 1];
-							pred_reg = reg_params_pos[0] * ii + reg_params_pos[params_offset_b] * jj + reg_params_pos[params_offset_c];
-							err_sz += fabs(pred_sz - curData);
-							err_reg += fabs(pred_reg - curData);
-						}
-					}
 					err_sz += realPrecision * count * 0.81;
-					if(debug_count ++ < 30) printf("err_sz = %.4f, err_reg = %.4f\n", err_sz, err_reg);
 					use_reg = (err_reg < err_sz);
 
 				}
-				//use_reg = 0;
 				if(use_reg)
 				{
 					{
@@ -4939,8 +4922,6 @@ unsigned char * SZ_compress_float_2D_MDQ_nonblocked_with_blocked_regression(floa
 	}
 	free(prediction_buffer_1);
 	free(prediction_buffer_2);
-
-	printf("unpredcitable = %d, total_count = %d\nuse_mean %d, regression # = %d, %d\n", total_unpred, num_elements, use_mean, reg_count, num_blocks);
 
 	int stateNum = 2*quantization_intervals;
 	HuffmanTree* huffmanTree = createHuffmanTree(stateNum);
